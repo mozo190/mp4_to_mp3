@@ -39,12 +39,12 @@ class MyApp(MDApp):
                 video = VideoFileClip(self.openFile.name)
                 audio = video.audio
                 for i in range(0, 100, 10):
-                    sleep(0.5)
+                    sleep(0.9)
                     self.activity_indicator.value = i
-                self.activity_indicator.value = 100
                 audio.write_audiofile("assets/audio/output.mp3")
                 self.error_label.text = "Conversion Done"
                 self.error_label.pos_hint = {'center_x': .5, 'center_y': .2}
+                self.activity_indicator.value = 100
 
             except Exception as e:
                 self.error_label.text = "Error during conversion: " + str(e)
