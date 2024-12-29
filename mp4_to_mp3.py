@@ -1,6 +1,6 @@
 from threading import Thread
 from time import sleep
-from tkinter.filedialog import askopenfile
+from tkinter.filedialog import askopenfile, asksaveasfilename
 
 from kivy.core.window import Window
 from kivy.uix.button import Button
@@ -10,6 +10,7 @@ from kivy.uix.progressbar import ProgressBar
 from kivymd.app import MDApp
 from kivymd.uix.relativelayout import MDRelativeLayout
 from moviepy import VideoFileClip
+from kivy.clock import Clock
 
 Window.size = (500, 400)
 
@@ -27,7 +28,13 @@ class MyApp(MDApp):
         except Exception as e:
             self.error_label.text = "Error: File not selected " + str(e)
 
-    def convertToAudio(self):
+    def select_output_folder(self, event):
+        select_output = asksaveasfilename(defaultextension=".mp3",
+                                          filetypes=[("Audio Files", "*.mp3")])
+        if select_output:
+            self.convertToAudio(select_output)
+
+    def convertToAudio(self, select_output):
         """Start the conversion process"""
         self.error_label.text = "Converting..... Please wait"
         self.error_label.pos_hint = {'center_x': .5, 'center_y': .2}
@@ -40,23 +47,24 @@ class MyApp(MDApp):
                 audio = video.audio
                 for i in range(0, 100, 10):
                     sleep(0.9)
-                    self.activity_indicator.value = i
-                audio.write_audiofile("assets/audio/output.mp3")
-                self.error_label.text = "Conversion Done"
-                self.error_label.pos_hint = {'center_x': .5, 'center_y': .2}
-                self.activity_indicator.value = 100
+                    # Fresh the progress bar on the main thread
+                    Clock.schedule_once(lambda dt: setattr(self.activity_indicator, 'value', i))
+                audio.write_audiofile(select_output)
+                Clock.schedule_once(lambda dt: setattr(self.activity_indicator, 'value', 100))
+                Clock.schedule_once(lambda dt: setattr(self.error_label, 'text', "Conversion Done"))
+                Clock.schedule_once(lambda dt: setattr(self.error_label, 'pos_hint', {'center_x': .5, 'center_y': .2}))
 
             except Exception as e:
-                self.error_label.text = "Error during conversion: " + str(e)
-                self.error_label.pos_hint = {'center_x': .5, 'center_y': .2}
+                Clock.schedule_once(lambda dt: setattr(self.error_label, 'text', "Error during conversion: " + str(e)))
+                Clock.schedule_once(lambda dt: setattr(self.error_label, 'pos_hint', {'center_x': .5, 'center_y': .2}))
 
             finally:
-                self.activity_indicator.parent.remove_widget(self.activity_indicator)
+                Clock.schedule_once(lambda dt: self.activity_indicator.parent.remove_widget(self.activity_indicator))
 
         Thread(target=conversionTask).start()
 
     def convertToAudioThread(self, event):
-        thread1 = Thread(target=self.convertToAudio)
+        thread1 = Thread(target=self.select_output_folder(event))
         thread1.daemon = True
         thread1.start()
 
