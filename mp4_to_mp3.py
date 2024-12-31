@@ -16,6 +16,17 @@ Window.size = (500, 400)
 
 
 class MyApp(MDApp):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.openFile = None
+        self.file_chooser_label = None
+        self.file_chooser_btn = None
+        self.error_label = None
+        self.selected_file_label = None
+        self.convert_btn = None
+        self.activity_indicator = None
+        self.img = None
+
     def fileChooser(self, event):
         try:
             self.openFile = askopenfile(mode='r', filetypes=[('Video Files', '*.mp4')])
